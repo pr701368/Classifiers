@@ -3,27 +3,115 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import subprocess
+import sys
 
 # Set up page configurations
 st.set_page_config(page_title="ML Classifier Benchmark Dashboard", layout="wide")
 
 st.title("📊 Machine Learning Classifier Benchmark Dashboard")
 st.markdown("This dashboard tracks, evaluates, and directly compares the 5 required classification models across 6 evaluation metrics.")
+# =====================================================================
+# 1. BROWSE & UPLOAD TEST DATA
+# =====================================================================
 
+SAVE_DIR = "data_sample_files"
+os.makedirs(SAVE_DIR, exist_ok=True)
+# 1. Check if we already have a successfully run file in memory
+if "last_run_file" not in st.session_state:
+    st.session_state.last_run_file = None
+if "last_run_output" not in st.session_state:
+    st.session_state.last_run_output = None
+if "script_executed" not in st.session_state:
+    st.session_state.script_executed = False
+
+# Display historical data if it exists
+if st.session_state.last_run_file:
+    st.info(f"📁 Showing data for last executed file: `{st.session_state.last_run_file}`")
+    st.subheader("Last Execution Terminal Output:")
+    st.code(st.session_state.last_run_output)
+    
+    # Optional: Clear memory button
+    if st.button("Clear Saved Data"):
+        st.session_state.last_run_file = None
+        st.session_state.last_run_output = None
+        st.rerun()
+
+st.divider()
+upload_file = st.file_uploader("Upload a Data (.csv) file", type=["csv"], key="file_uploader")
+
+if upload_file is not None:
+    # Update state upon success
+    st.session_state.script_executed = False
+    file_path = os.path.join(SAVE_DIR, upload_file.name)
+    with open(file_path, "wb") as f:
+        f.write(upload_file.getbuffer())
+    
+    st.success(f"Saved: `{file_path}`")
+    if not st.session_state.script_executed:
+        if st.button("🚀 Run Logistic,Decision Tree,K-Neighbour,Naive Bayes,SVM models over above uploaded data"):
+            st.info("Executing script...")
+            try:
+                script_to_run = "train_and_save.py"
+                result = subprocess.run(
+                    [sys.executable, script_to_run], 
+                    capture_output=True, 
+                    text=True, 
+                    check=True
+                )
+                # Update state upon success
+                st.session_state.script_executed = True
+                st.success("✅ Script finished successfully! Reloading page...")
+                st.session_state.last_run_file = upload_file.name
+                st.session_state.last_run_output = result.stdout if result.stdout else "Script executed with no output."
+                
+                # Clear file uploader state and refresh logic
+                st.rerun()
+                    
+                # Inject JavaScript to reload the browser window completely
+                components.html(
+                    """
+                    <script>
+                        window.parent.location.reload();
+                    </script>
+                    """,
+                    height=0,
+                )
+                    
+            except subprocess.CalledProcessError as e:
+                st.error("❌ Script failed with an error!")
+                st.code(e.stderr)
 # =====================================================================
 # 1. LOAD TEST DATA & ARTIFACTS
 # =====================================================================
 @st.cache_data
 def load_test_data():
+    if st.session_state.last_run_file == None:
     # Looks for test_data.csv in your root folder
-    if os.path.exists("test_data.csv"):
-        df = pd.read_csv("test_data.csv")
-        return df
+        script_to_run_test_data = "testdata.py"
+        result = subprocess.run(
+                    [sys.executable, script_to_run_test_data], 
+                            capture_output=True, 
+                            text=True, 
+                            check=True
+                        )
+        if os.path.exists("test_data.csv"):
+            df = pd.read_csv("test_data.csv")
+            return df
+        else:
+            st.error("⚠️ `test_data.csv` not found in the project root directory! Please run your training pipeline first.")
+            return None
     else:
-        st.error("⚠️ `test_data.csv` not found in the project root directory! Please run your training pipeline first.")
-        return None
+        if os.path.exists(os.path.join(SAVE_DIR, st.session_state.last_run_file)): #st.session_state.last_run_file
+            df = pd.read_csv(os.path.join(SAVE_DIR, st.session_state.last_run_file))
+            return df
+        else:
+            st.error(f"⚠️ {os.path.join(SAVE_DIR, st.session_state.last_run_file)} not found in the project root directory! Please run your trining pipeline first.")
+            return None
 
-test_df = load_test_data()
+
+test_df = load_test_data() if st.session_state.last_run_file is None else pd.read_csv(os.path.join(SAVE_DIR, st.session_state.last_run_file))
+
 
 if test_df is not None:
     # Separate features and target (Assuming the last column is the target/label)

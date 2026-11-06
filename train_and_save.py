@@ -10,16 +10,16 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 
 # 2. Check if test data exists, if not create a quick mock version
-if not os.path.exists("test_data.csv"):
-    import numpy as np
-    np.random.seed(42)
-    mock_X = np.random.randn(500, 12)
-    mock_y = (np.sum(mock_X[:, :5], axis=1) > 0).astype(int)
-    cols = [f"feature_{i+1}" for i in range(12)]
-    df = pd.DataFrame(mock_X, columns=cols)
-    df['target'] = mock_y
-    df.to_csv("test_data.csv", index=False)
-    print("✅ Created missing test_data.csv file.")
+#if not os.path.exists("test_data.csv"):
+import numpy as np
+np.random.seed(42)
+mock_X = np.random.randn(500, 12)
+mock_y = (np.sum(mock_X[:, :5], axis=1) > 0).astype(int)
+cols = [f"feature_{i+1}" for i in range(12)]
+df = pd.DataFrame(mock_X, columns=cols)
+df['target'] = mock_y
+df.to_csv("test_data.csv", index=False)
+print("✅ Created missing test_data.csv file.")
 
 # 3. Load dataset
 df = pd.read_csv("test_data.csv")

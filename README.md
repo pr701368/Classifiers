@@ -50,6 +50,7 @@ Metrics obtained after running belwo models on Wisconsin Breast Cancer Dataset
 Overall Winner of datset: Naive Bayes Classifier
 
 # Streamlit app features:
+Streamlit deployed app url/link: https://classifiers-xvf54siefuhvdnx35u8uwr.streamlit.app/
 a. Dataset upload option: By default when page loads, all or the selected models run on Wisconsin Breast Cancer Dataset. Also, a uplaod button available to upload datasets and apply predictions on it.
 b. Model Select Option: A dropdown available to select models to run on dataset. By default all are selected. We can remove one or more models and apply the remaining models on the dataset.
 c. Display of Evaluation Metrics: Shows metrics of models applied on dataset in th ewebpage
